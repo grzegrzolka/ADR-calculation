@@ -1,8 +1,16 @@
-#import streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 #import matplotlib.pyplot as plt
 
+class Isotope:
+    def __init__(self, isotope_name, activity):
+        self.isotope_name = isotope_name
+        self.activity = activity / 1000000 # Convert MBq to TBq
+
+
+
+st.title('Obliczanie LSA')
 
 ##############################
 ### Load file
@@ -10,29 +18,46 @@ import numpy as np
 file_name = "D-Value_A1_A2_Exempt.xlsm"
 df = pd.read_excel(file_name, sheet_name = "D-Value_A1_A2_Exempted")
 df = df.set_index("Radionuclide")
-df.head()
+
+mass_kg = st.number_input("Podaj masę odpadu w kg", min_value=0.0, value=100.0, step=1.0)
+st.divider()
+
+# Get Isotope names
+isotopes_names = df.index.to_list()
+if 'isotopes' not in st.session_state:
+    st.session_state['isotopes'] = []
+isotopes_in_waste = {}
+
+def manager():
+    isotope_name = st.selectbox(label="podaj izotop", options = isotopes_names)
+    activity = st.number_input("Podaj aktywność")
+    add_button = st.button("Add", key='add_button')
+    clear_button = st.button("Clear", key='clear', type="primary")
+    selected_isotope_names = [isotope.isotope_name for isotope in st.session_state['isotopes']]
+    if add_button:
+        if activity > 0 and isotope_name not in selected_isotope_names:
+            new_isotope = Isotope(isotope_name, activity)
+            isotopes_in_waste[isotope_name] = new_isotope
+            st.session_state['isotopes'] += [new_isotope]
+            selected_isotope_names.append(isotope_name)
+        else:
+            st.warning("Juz wybrales ten izotop")
+        
+    if clear_button:
+        st.session_state['isotopes'] = []
+        selected_isotope_names = [isotope.isotope_name for isotope in st.session_state['isotopes']]
+
+
+manager()
+
+isotopes_names = [isotope.isotope_name for isotope in st.session_state['isotopes']]
+activity_list = [isotope.activity for isotope in st.session_state['isotopes']]
+
+selected_isotopes = df.loc[isotopes_names]
 
 
 ##############################
 ### Input
-
-isotope_1 = "Cs-137"
-activity_1 = 0.3
-activity_1 = activity_1 / 1000000
-
-isotope_2 = "Am-241"
-activity_2 = 1200
-activity_2 = activity_2 / 1000000
-
-isotope_3 = "Sr-90"
-activity_3 = 0.8
-activity_3 = activity_3 / 1000000
-
-mass_kg = 10
-
-activity_list = [activity_1, activity_2, activity_3 ]
-selected_isotopes = df.loc[[isotope_1, isotope_2, isotope_3]]
-
 
 ##############################
 ### Process data
@@ -68,6 +93,7 @@ average_activity_sum = selected_isotopes["Average specific activty"].sum()
 type_A_sum = selected_isotopes["Type-A Package"].sum()
 act_concent_in_package_sum = selected_isotopes ["Activity concentration in consignment (Bq/g)"].sum()
 
+st.write(selected_isotopes)
 
 
 ##############################
@@ -88,5 +114,9 @@ else :
         category_lsa = "LSA-III"
     else:
         category_lsa = "NOT LSA"
+if len(selected_isotopes) == 0:
+    category_lsa = " "
 
-category_lsa
+st.divider()
+category_str = f"Category of LSA: :green[{category_lsa}]"
+st.header(category_str, divider="green")
