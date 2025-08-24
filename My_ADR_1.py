@@ -14,7 +14,7 @@ class Isotopes_in_Package:  #class named Isotopes_in_waste to store isotope name
 
 def manager():  #function to manage adding and clearing isotopes
     isotope_name = st.selectbox(label="Select isotope: ", options = isotopes_names)
-    activity = st.number_input("Enter isotope activity [MBq: ]") / 1000000  # Convert MBq to TBq
+    activity = st.number_input("Enter isotope activity [MBq]: ") / 1000000  # Convert MBq to TBq
     add_button = st.button("Add isotope", key='add_button', type="primary")
     clear_button = st.button("Clear isotopes", key='clear', type="primary")
     selected_isotope_names = [isotope.isotope_name for isotope in st.session_state['radionuclides']]
